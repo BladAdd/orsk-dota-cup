@@ -107,6 +107,43 @@
 }
 .sponsor-line img { height: 40px; width: auto; }
 
+/* Связка «КПРФ × Dota 2»: два логотипа как единая эмблема */
+.fusion {
+  display: flex; align-items: center; gap: 20px; margin-top: 34px;
+  padding: 14px 18px;
+  background: linear-gradient(90deg, rgba(210,31,43,.14), rgba(13,15,19,0) 70%);
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-lg);
+  max-width: 560px;
+}
+.fusion-marks { display: flex; align-items: center; gap: 10px; flex: none; }
+.fusion-marks img {
+  height: 56px; width: 56px; object-fit: contain; border-radius: 6px;
+  background: #fff; padding: 3px; box-shadow: 0 4px 14px rgba(0,0,0,.4);
+}
+.fusion-marks img[alt="Dota 2"] { background: #000; }
+.fusion-x {
+  font-family: var(--font-display); font-size: 22px; color: var(--gold);
+}
+.fusion-text { display: grid; gap: 2px; }
+.fusion-text strong {
+  font-family: var(--font-display); font-size: 15px; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text);
+}
+.fusion-text span { font-size: 12px; color: var(--muted); }
+@media (max-width: 560px) {
+  .fusion { flex-direction: column; align-items: flex-start; }
+}
+
+/* Двойной логотип в шапке */
+.brand-marks { display: flex; align-items: center; gap: 4px; flex: none; }
+.brand-marks img {
+  height: 30px; width: 30px; object-fit: contain; border-radius: 4px;
+  background: #fff; padding: 2px;
+}
+.brand-marks img.dota { background: #000; }
+
 /* ---------- Обратный отсчёт ---------- */
 .countdown { display: flex; gap: 10px; }
 .countdown .cell {

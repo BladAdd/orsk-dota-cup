@@ -40,20 +40,19 @@ d.rectangle([0, 0, W, H], fill=None)
 d.rectangle([60, 90, 760, 540], fill=(16, 19, 26))
 d.rectangle([60, 90, 760, 96], fill=RED)
 
-# эмблема-щит
-cx, cy, s = 130, 170, 46
-d.polygon([(cx, cy - s), (cx + s, cy - s * 0.62), (cx + s, cy + s * 0.2),
-           (cx, cy + s), (cx - s, cy + s * 0.2), (cx - s, cy - s * 0.62)], fill=RED_DEEP, outline=GOLD, width=3)
-d.polygon([(cx, cy - s * 0.78), (cx + s * 0.78, cy - s * 0.48), (cx + s * 0.78, cy + s * 0.14),
-           (cx, cy + s * 0.78), (cx - s * 0.78, cy + s * 0.14), (cx - s * 0.78, cy - s * 0.48)], fill=RED)
-# звезда
-star = []
+# логотипы КПРФ и Dota 2 как единая связка
 import math
-for k in range(10):
-    r = s * 0.5 if k % 2 == 0 else s * 0.21
-    a = -math.pi / 2 + k * math.pi / 5
-    star.append((cx + r * math.cos(a), cy - s * 0.1 + r * math.sin(a)))
-d.polygon(star, fill=GOLD)
+KPRF = os.path.join(ROOT, "assets", "img", "kprf.png")
+DOTA = os.path.join(ROOT, "assets", "img", "dota2.png")
+if os.path.exists(KPRF):
+    k = Image.open(KPRF).convert("RGB").resize((110, 110))
+    img.paste(k, (95, 120))
+if os.path.exists(DOTA):
+    dd = Image.open(DOTA).convert("RGB")
+    dd = dd.resize((200, int(200 * dd.height / dd.width)))
+    img.paste(dd, (940, 150))
+# золотой знак связи между логотипами и текстом
+d.text((215, 150), "×", font=font("arialbd.ttf", 60), fill=GOLD)
 
 f_title = font("arialbd.ttf", 64)
 f_sub = font("arial.ttf", 30)
@@ -67,12 +66,6 @@ d.text((200, 320), "Открытый любительский турнир Ор�
 d.text((200, 372), "15 000 ₽  ·  14 команд  ·  single elimination", font=f_meta, fill=GOLD)
 d.text((200, 430), "Старт 28 ноября 2026 · финал в Орске", font=f_small, fill=MUTED)
 d.text((200, 470), "Генеральный спонсор — Орское городское отделение КПРФ", font=f_small, fill=MUTED)
-
-# правый акцент: силуэт кубка из прямоугольников
-d.rectangle([900, 200, 1080, 230], fill=GOLD)
-d.polygon([(920, 230), (1060, 230), (1030, 330), (950, 330)], fill=GOLD)
-d.rectangle([975, 330, 1005, 380], fill=GOLD)
-d.rectangle([940, 380, 1040, 400], fill=GOLD)
 
 img.save(OUT, "PNG", optimize=True)
 print("saved", OUT, img.size)

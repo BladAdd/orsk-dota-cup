@@ -54,7 +54,12 @@
     const burger = el('button', { class: 'burger', 'aria-label': 'Меню', text: '☰',
       onclick: () => nav.classList.toggle('open') });
 
-    const brand = el('a', { class: 'brand', href: ROOT + 'index.html', html: EMBLEM });
+    const brand = el('a', { class: 'brand', href: ROOT + 'index.html' });
+    const marks = el('span', { class: 'brand-marks' }, [
+      el('img', { src: ROOT + 'assets/img/kprf.png', alt: 'КПРФ' }),
+      el('img', { class: 'dota', src: ROOT + 'assets/img/dota2.png', alt: 'Dota 2' })
+    ]);
+    brand.append(marks);
     const nameBox = el('span', { class: 'name' });
     nameBox.append(document.createTextNode(settings?.site?.short_title || 'Кубок Орска'));
     nameBox.append(el('small', { text: 'Dota 2 · Орск' }));
