@@ -19,8 +19,8 @@ values
    15000, 'Онлайн (серверы EU West), финал — Орск', 'registration')
 on conflict (id) do nothing;
 
--- Настройки ----------------------------------------------------------
-insert into public.settings (key, value, is_public) values
+-- Настройки (is_public по умолчанию true) ----------------------------
+insert into public.settings (key, value) values
   ('site', jsonb_build_object(
      'title', 'Кубок Орска по Dota 2',
      'short_title', 'Кубок Орска',
