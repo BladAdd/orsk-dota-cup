@@ -270,9 +270,15 @@ end $$;
 
 create or replace function public.write_audit()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  rec jsonb;
+  eid text;
 begin
+  -- у большинства таблиц ключ id, у settings — key; берём то, что есть
+  rec := case when tg_op = 'DELETE' then to_jsonb(old) else to_jsonb(new) end;
+  eid := coalesce(rec ->> 'id', rec ->> 'key', '');
   insert into public.audit_log (actor_id, action, entity, entity_id, payload)
-  values (auth.uid(), tg_op, tg_table_name, coalesce(new.id::text, old.id::text),
+  values (auth.uid(), tg_op, tg_table_name, eid,
           jsonb_build_object('before', case when tg_op = 'UPDATE' then to_jsonb(old) else null end,
                              'after',  case when tg_op = 'DELETE' then null else to_jsonb(new) end));
   return coalesce(new, old);
