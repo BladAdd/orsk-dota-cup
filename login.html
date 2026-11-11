@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru" data-root="">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вход — Кубок Орска по Dota 2</title>
+  <meta name="description" content="Вход для капитанов команд и участников турнира.">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/vendor/supabase.js"></script>
+  <script defer src="assets/js/config.js"></script>
+  <script defer src="assets/js/db.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/auth.js"></script>
+  <script defer src="assets/js/chrome.js"></script>
+  <script defer src="assets/js/pages/login.js"></script>
+</head>
+<body>
+<div id="site-header"></div>
+
+<section class="section">
+  <div class="container" style="max-width:460px">
+    <div class="panel">
+      <h2>Вход</h2>
+      <p class="muted" style="font-size:14px">Для капитанов команд, игроков и оргкомитета.
+        Если учётной записи ещё нет — <a href="register.html">зарегистрируйтесь</a>.</p>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" autocomplete="email" required>
+          <div class="error"></div>
+        </div>
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+          <div class="error"></div>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Войти</button>
+      </form>
+      <p class="faint" id="login-note" style="font-size:12px;margin-top:14px"></p>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+</body>
+</html>

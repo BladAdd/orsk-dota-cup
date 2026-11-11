@@ -1,0 +1,17 @@
+# Служебное
+node_modules/
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+__pycache__/
+*.pyc
+
+# Локальные превью и черновики, не для публикации
+preview/
+tools/__pycache__/
+
+# Исходный референс сетки от оргкомитета (не нужен на сайте)
+команды.webp

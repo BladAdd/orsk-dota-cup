@@ -1,0 +1,91 @@
+/* =========================================================
+   Админка: оболочка, таблицы заявок, редакторы
+   ========================================================= */
+
+body.admin { background: var(--bg-2); }
+
+.admin-shell { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+@media (max-width: 900px) { .admin-shell { grid-template-columns: 1fr; } }
+
+.admin-side {
+  background: var(--bg);
+  border-right: 1px solid var(--line-soft);
+  padding: 20px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.admin-side .side-brand {
+  font-family: var(--font-display); font-size: 14px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text); padding: 6px 12px 16px;
+  border-bottom: 1px solid var(--line-soft); margin-bottom: 12px;
+}
+.admin-side .side-brand small { display: block; color: var(--red); font-size: 10px; letter-spacing: .24em; }
+.admin-side a {
+  color: var(--muted); font-size: 13px; font-weight: 600; padding: 9px 12px;
+  border-radius: var(--radius); display: flex; align-items: center; gap: 10px;
+}
+.admin-side a:hover { background: var(--panel); color: #fff; }
+.admin-side a.active { background: var(--gold-soft); color: var(--gold); }
+.admin-side a .cnt {
+  margin-left: auto; background: var(--red); color: #fff; border-radius: 10px;
+  font-size: 10px; padding: 1px 7px; font-weight: 700;
+}
+.admin-side .spacer { flex: 1; }
+
+.admin-main { padding: 26px 30px 60px; min-width: 0; }
+.admin-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-bottom: 24px; flex-wrap: wrap;
+}
+.admin-top h1 { font-size: 24px; margin: 0; }
+.admin-top .who { font-size: 13px; color: var(--muted); }
+
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 26px; }
+@media (max-width: 800px) { .stat-row { grid-template-columns: repeat(2, 1fr); } }
+.stat {
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.stat .v { font-family: var(--font-display); font-size: 26px; color: var(--gold); }
+.stat .k { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.toolbar .grow { flex: 1; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 18px; flex-wrap: wrap; }
+.tabs button {
+  background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer;
+  color: var(--muted); font: inherit; font-size: 13px; font-weight: 700;
+  padding: 9px 14px; text-transform: uppercase; letter-spacing: .06em;
+}
+.tabs button.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* Заявка-карточка с составом */
+.app-card { background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); margin-bottom: 16px; overflow: hidden; }
+.app-card .head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--bg-2); flex-wrap: wrap; }
+.app-card .head .nm { font-family: var(--font-display); font-size: 16px; }
+.app-card .head .grow { flex: 1; }
+.app-card .roster { padding: 6px 18px 14px; }
+.app-card .roster table { width: 100%; font-size: 13px; border-collapse: collapse; }
+.app-card .roster td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); }
+.app-card .roster td.role { color: var(--faint); text-transform: uppercase; font-size: 11px; letter-spacing: .08em; }
+
+/* Модалка */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(5, 6, 9, .72); z-index: 300;
+  display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px;
+  overflow-y: auto;
+}
+.modal {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  width: 100%; max-width: 620px; box-shadow: var(--shadow); padding: 24px;
+}
+.modal h3 { margin-top: 0; }
+.modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* Мини-сетка в админке для расстановки */
+.slot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.slot-box { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
+.slot-box .lbl { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+
+/* Журнал */
+.audit-line { font-size: 12px; color: var(--muted); padding: 7px 0; border-bottom: 1px solid var(--line-soft); display: flex; gap: 12px; }
+.audit-line .t { color: var(--faint); flex: none; width: 130px; }

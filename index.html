@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru" data-root="">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Кубок Орска по Dota 2 — открытый любительский турнир, призовой фонд 15 000 ₽</title>
+  <meta name="description" content="Открытый любительский турнир по Dota 2 в Орске. 14 команд, single elimination, призовой фонд 15 000 ₽ от Орского городского отделения КПРФ. Регистрация, сетка, расписание и регламент.">
+  <meta property="og:title" content="Кубок Орска по Dota 2">
+  <meta property="og:description" content="14 команд. Одна сетка. 15 000 ₽ призовых. Регистрация открыта.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/img/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/vendor/supabase.js"></script>
+  <script defer src="assets/js/config.js"></script>
+  <script defer src="assets/js/db.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/auth.js"></script>
+  <script defer src="assets/js/chrome.js"></script>
+  <script defer src="assets/js/comments.js"></script>
+  <script defer src="assets/js/bracket-engine.js"></script>
+  <script defer src="assets/js/pages/home.js"></script>
+</head>
+<body>
+<div id="site-header"></div>
+
+<section class="hero">
+  <div class="bg-heroes" aria-hidden="true">
+    <img src="assets/img/heroes/pudge.png" alt="">
+    <img src="assets/img/heroes/invoker.png" alt="">
+    <img src="assets/img/heroes/nevermore.png" alt="">
+    <img src="assets/img/heroes/windrunner.png" alt="">
+  </div>
+  <div class="container inner">
+    <div class="eyebrow">Орск · Оренбуржье · сезон 2026</div>
+    <h1>Кубок Орска <span class="accent">по Dota 2</span></h1>
+    <p class="lead">Открытый любительский турнир для команд города и области.
+      Single elimination, четырнадцать команд в сетке, финал на площадке в Орске.
+      Призовой фонд — 15 000 ₽ от Орского городского отделения КПРФ.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="register.html">Подать заявку</a>
+      <a class="btn btn-gold" href="bracket.html">Смотреть сетку</a>
+    </div>
+
+    <div class="sponsor-line">
+      <img src="assets/img/kprf-lockup.svg" alt="КПРФ Орск — генеральный спонсор">
+      <span>Генеральный спонсор турнира — Орское городское отделение КПРФ</span>
+    </div>
+
+    <div class="hero-facts">
+      <div class="fact"><div class="v" id="fact-prize">15 000 ₽</div><div class="k">призовой фонд</div></div>
+      <div class="fact"><div class="v" id="fact-teams">14 / 16</div><div class="k">команд в сетке</div></div>
+      <div class="fact"><div class="v" id="fact-start">28 ноября</div><div class="k">старт первого раунда</div></div>
+      <div class="fact"><div class="v">BO1 → BO5</div><div class="k">формат матчей</div></div>
+    </div>
+
+    <div style="margin-top:28px">
+      <div class="eyebrow" id="cd-label">до старта первого раунда</div>
+      <div class="countdown" id="countdown"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="panel-title">
+      <h2>Новости оргкомитета</h2>
+      <a class="btn btn-ghost btn-sm" href="news.html">Все новости</a>
+    </div>
+    <div class="grid grid-2" id="news-list"></div>
+  </div>
+</section>
+
+<hr class="rule container">
+
+<section class="section-tight">
+  <div class="container">
+    <div class="panel-title">
+      <h2>Команды турнира</h2>
+      <a class="btn btn-ghost btn-sm" href="teams.html">Все команды и составы</a>
+    </div>
+    <div class="grid grid-3" id="teams-preview"></div>
+  </div>
+</section>
+
+<hr class="rule container">
+
+<section class="section-tight" style="padding-bottom:64px">
+  <div class="container" id="comments-host"></div>
+</section>
+
+<div id="site-footer"></div>
+</body>
+</html>

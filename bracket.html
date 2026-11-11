@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru" data-root="">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Сетка — Кубок Орска по Dota 2</title>
+  <meta name="description" content="Турнирная сетка Кубка Орска по Dota 2: single elimination, результаты матчей обновляются по мере завершения.">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script defer src="assets/vendor/supabase.js"></script>
+  <script defer src="assets/js/config.js"></script>
+  <script defer src="assets/js/db.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/auth.js"></script>
+  <script defer src="assets/js/chrome.js"></script>
+  <script defer src="assets/js/bracket-engine.js"></script>
+  <script defer src="assets/js/comments.js"></script>
+  <script defer src="assets/js/pages/bracket.js"></script>
+</head>
+<body>
+<div id="site-header"></div>
+
+<section class="section">
+  <div class="container">
+    <div class="eyebrow">Single elimination</div>
+    <h1>Сетка турнира</h1>
+    <p class="muted" style="max-width:640px">Раунд 1 и четвертьфиналы — BO1, полуфиналы — BO3, финал — BO5.
+      Победитель 7-й пары первого раунда получает бай. Результаты вносит судейская бригада по завершении карт.</p>
+    <div id="bracket-host" style="margin-top:26px"></div>
+  </div>
+</section>
+
+<section class="section-tight" style="padding-bottom:64px">
+  <div class="container" id="comments-host"></div>
+</section>
+
+<div id="site-footer"></div>
+</body>
+</html>
