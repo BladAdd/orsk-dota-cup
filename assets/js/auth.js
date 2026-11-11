@@ -26,6 +26,13 @@
       options: { data: { nickname, full_name: fullName } }
     });
     if (error) throw error;
+    // Почту подтверждает триггер 005_local_auth.sql, но при включённом
+    // «Confirm email» GoTrue всё равно не отдаёт сессию в ответ на signUp.
+    // Входим тем же паролем сразу: учётка к этому моменту уже подтверждена.
+    if (!data.session) {
+      const { error: loginError } = await window.DB.sb.auth.signInWithPassword({ email, password });
+      if (loginError) throw loginError;
+    }
     await refresh();
     return data;
   }

@@ -47,6 +47,9 @@
       btn.disabled = true;
       try {
         await window.Auth.signup({ email: v('email'), password: v('password'), nickname: v('nickname'), fullName: v('fullName') });
+        // Первый зарегистрировавшийся получает роль admin (005_local_auth.sql) —
+        // капитану сюда идти незачем, а оргкомитету сразу нужна панель.
+        if (window.Auth.isAdmin) { location.href = 'admin/index.html'; return; }
         toast('Аккаунт создан', 'ok');
       } catch (err) { toast('Ошибка регистрации: ' + err.message, 'error'); btn.disabled = false; }
     });
