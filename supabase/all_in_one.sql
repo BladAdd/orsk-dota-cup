@@ -1,4 +1,23 @@
 -- =====================================================================
+-- Кубок Орска по Dota 2 — ВСЕ миграции одним файлом.
+-- Для вставки одной операцией в Supabase: SQL Editor -> New query -> Run.
+--
+-- Состоит из supabase/migrations/:
+--   001_schema.sql   таблицы, функции, триггеры, публичные представления
+--   002_rls.sql      Row Level Security и защитные триггеры
+--   003_seed.sql     турнир, настройки, спонсор, 14 команд, сетка, новости
+--   004_storage.sql  бакеты Storage и политики доступа к файлам
+--
+-- Файл собран автоматически; правьте исходники в migrations/, не этот файл.
+-- Повторный запуск безопасен.
+-- =====================================================================
+
+
+-- ###################################################################
+-- ####  001_schema.sql
+-- ###################################################################
+
+-- =====================================================================
 -- Кубок Орска по Dota 2 — схема базы данных
 -- Применяется в Supabase: SQL Editor -> New query -> Run
 -- =====================================================================
@@ -357,6 +376,12 @@ select n.id, n.slug, n.title, n.excerpt, n.body, n.cover_url, n.tag,
 from public.news n
 left join public.profiles p on p.id = n.author_id
 where n.is_published and (n.published_at is null or n.published_at <= now());
+
+
+-- ###################################################################
+-- ####  002_rls.sql
+-- ###################################################################
+
 -- =====================================================================
 -- Row Level Security. Единственный рубеж защиты: anon-ключ публичен,
 -- поэтому всё разграничение живёт здесь.
@@ -580,6 +605,12 @@ create policy settings_write on public.settings for all to authenticated
 drop policy if exists audit_select on public.audit_log;
 create policy audit_select on public.audit_log for select to authenticated
   using (public.is_admin());
+
+
+-- ###################################################################
+-- ####  003_seed.sql
+-- ###################################################################
+
 -- =====================================================================
 -- Стартовые данные: турнир, настройки, спонсор, 14 команд и сетка
 -- (пары первого раунда — как в рабочей сетке оргкомитета).
@@ -632,6 +663,11 @@ values
 on conflict (id) do nothing;
 
 -- Команды (14, пары первого раунда) ----------------------------------
+-- Триггер teams_guard из 002_rls.sql принудительно ставит status='pending'
+-- для всех вставок не от админа, а сид выполняется из SQL Editor'а без
+-- auth.uid(). Поэтому на время сида триггер выключаем и возвращаем обратно.
+alter table public.teams disable trigger teams_guard;
+
 insert into public.teams (id, name, tag, city, status, seed_order) values
   ('11111111-1111-4111-8111-111111111101', '322 Team',            '322',   'Орск',      'approved', 1),
   ('11111111-1111-4111-8111-111111111102', 'ТОБОЛЬСКИЕ ПЕЛЬМЕНИ', 'ТБЛП',  'Тобольск',  'approved', 2),
@@ -648,6 +684,13 @@ insert into public.teams (id, name, tag, city, status, seed_order) values
   ('11111111-1111-4111-8111-111111111113', 'Бургер мопсы',        'БРГМ',  'Орск',      'approved', 13),
   ('11111111-1111-4111-8111-111111111114', 'Rapira team',         'RPR',   'Новотроицк','approved', 14)
 on conflict (id) do nothing;
+
+-- Повторный запуск сида должен лечить уже существующие строки:
+-- on conflict do nothing их не трогает, а status мог остаться 'pending'.
+update public.teams set status = 'approved'
+where seed_order between 1 and 14 and status <> 'approved';
+
+alter table public.teams enable trigger teams_guard;
 
 -- Сетка --------------------------------------------------------------
 -- Матчи вставляются без next_match_id (ссылки на ещё не созданные строки
@@ -744,3 +787,94 @@ insert into public.news (id, slug, title, excerpt, body, tag, is_published, publ
 Полный текст регламента — в разделе «Регламент».',
    'регламент', true, '2026-11-12 10:30:00+05')
 on conflict (id) do nothing;
+
+
+-- ###################################################################
+-- ####  004_storage.sql
+-- ###################################################################
+
+-- =====================================================================
+-- Хранилище (Storage): три публичных бакета и политики доступа.
+-- Заменяет ручные действия из пункта 4 инструкции supabase/SETUP.md.
+-- Повторный запуск безопасен.
+--
+-- Чтение файлов доступно всем, запись — только админу (public.is_admin()).
+-- Публичные бакеты отдают файлы по адресу
+--   <Project URL>/storage/v1/object/public/<бакет>/<путь>
+-- без проверки RLS; политики ниже нужны для API хранилища и для
+-- загрузки/удаления файлов из админки.
+-- =====================================================================
+
+insert into storage.buckets (id, name, public, avif_autodetection, file_size_limit)
+values
+  ('team-logos',  'team-logos',  true, true, 5242880),
+  ('news-covers', 'news-covers', true, true, 5242880),
+  ('photos',      'photos',      true, true, 10485760)
+on conflict (id) do update
+  set public = excluded.public,
+      avif_autodetection = excluded.avif_autodetection,
+      file_size_limit = excluded.file_size_limit,
+      updated_at = now();
+
+-- ---------------------------------------------------------------------
+-- team-logos
+-- ---------------------------------------------------------------------
+drop policy if exists "team-logos: public read" on storage.objects;
+create policy "team-logos: public read" on storage.objects for select
+  to anon, authenticated using (bucket_id = 'team-logos');
+
+drop policy if exists "team-logos: admin insert" on storage.objects;
+create policy "team-logos: admin insert" on storage.objects for insert
+  to authenticated with check (bucket_id = 'team-logos' and public.is_admin());
+
+drop policy if exists "team-logos: admin update" on storage.objects;
+create policy "team-logos: admin update" on storage.objects for update
+  to authenticated
+  using (bucket_id = 'team-logos' and public.is_admin())
+  with check (bucket_id = 'team-logos' and public.is_admin());
+
+drop policy if exists "team-logos: admin delete" on storage.objects;
+create policy "team-logos: admin delete" on storage.objects for delete
+  to authenticated using (bucket_id = 'team-logos' and public.is_admin());
+
+-- ---------------------------------------------------------------------
+-- news-covers
+-- ---------------------------------------------------------------------
+drop policy if exists "news-covers: public read" on storage.objects;
+create policy "news-covers: public read" on storage.objects for select
+  to anon, authenticated using (bucket_id = 'news-covers');
+
+drop policy if exists "news-covers: admin insert" on storage.objects;
+create policy "news-covers: admin insert" on storage.objects for insert
+  to authenticated with check (bucket_id = 'news-covers' and public.is_admin());
+
+drop policy if exists "news-covers: admin update" on storage.objects;
+create policy "news-covers: admin update" on storage.objects for update
+  to authenticated
+  using (bucket_id = 'news-covers' and public.is_admin())
+  with check (bucket_id = 'news-covers' and public.is_admin());
+
+drop policy if exists "news-covers: admin delete" on storage.objects;
+create policy "news-covers: admin delete" on storage.objects for delete
+  to authenticated using (bucket_id = 'news-covers' and public.is_admin());
+
+-- ---------------------------------------------------------------------
+-- photos
+-- ---------------------------------------------------------------------
+drop policy if exists "photos: public read" on storage.objects;
+create policy "photos: public read" on storage.objects for select
+  to anon, authenticated using (bucket_id = 'photos');
+
+drop policy if exists "photos: admin insert" on storage.objects;
+create policy "photos: admin insert" on storage.objects for insert
+  to authenticated with check (bucket_id = 'photos' and public.is_admin());
+
+drop policy if exists "photos: admin update" on storage.objects;
+create policy "photos: admin update" on storage.objects for update
+  to authenticated
+  using (bucket_id = 'photos' and public.is_admin())
+  with check (bucket_id = 'photos' and public.is_admin());
+
+drop policy if exists "photos: admin delete" on storage.objects;
+create policy "photos: admin delete" on storage.objects for delete
+  to authenticated using (bucket_id = 'photos' and public.is_admin());

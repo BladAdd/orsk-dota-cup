@@ -50,6 +50,11 @@ values
 on conflict (id) do nothing;
 
 -- Команды (14, пары первого раунда) ----------------------------------
+-- Триггер teams_guard из 002_rls.sql принудительно ставит status='pending'
+-- для всех вставок не от админа, а сид выполняется из SQL Editor'а без
+-- auth.uid(). Поэтому на время сида триггер выключаем и возвращаем обратно.
+alter table public.teams disable trigger teams_guard;
+
 insert into public.teams (id, name, tag, city, status, seed_order) values
   ('11111111-1111-4111-8111-111111111101', '322 Team',            '322',   'Орск',      'approved', 1),
   ('11111111-1111-4111-8111-111111111102', 'ТОБОЛЬСКИЕ ПЕЛЬМЕНИ', 'ТБЛП',  'Тобольск',  'approved', 2),
@@ -66,6 +71,13 @@ insert into public.teams (id, name, tag, city, status, seed_order) values
   ('11111111-1111-4111-8111-111111111113', 'Бургер мопсы',        'БРГМ',  'Орск',      'approved', 13),
   ('11111111-1111-4111-8111-111111111114', 'Rapira team',         'RPR',   'Новотроицк','approved', 14)
 on conflict (id) do nothing;
+
+-- Повторный запуск сида должен лечить уже существующие строки:
+-- on conflict do nothing их не трогает, а status мог остаться 'pending'.
+update public.teams set status = 'approved'
+where seed_order between 1 and 14 and status <> 'approved';
+
+alter table public.teams enable trigger teams_guard;
 
 -- Сетка --------------------------------------------------------------
 -- Матчи вставляются без next_match_id (ссылки на ещё не созданные строки
