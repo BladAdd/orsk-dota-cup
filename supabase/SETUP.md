@@ -48,7 +48,7 @@ psycopg2.connect(
 ## 2. Применить миграции
 
 **Вариант А — одной вставкой.** В проекте откройте **SQL Editor** → **New query**,
-вставьте целиком `supabase/all_in_one.sql` и нажмите **Run**. Файл собран из пяти
+вставьте целиком `supabase/all_in_one.sql` и нажмите **Run**. Файл собран из шести
 миграций, идемпотентен: повторный запуск ничего не ломает.
 
 **Вариант Б — по файлам**, строго в порядке нумерации:
@@ -57,7 +57,8 @@ psycopg2.connect(
 2. `supabase/migrations/002_rls.sql` — Row Level Security и защитные триггеры
 3. `supabase/migrations/003_seed.sql` — турнир, настройки, спонсор, 14 команд, сетка, новости
 4. `supabase/migrations/004_storage.sql` — бакеты Storage и политики доступа к файлам
-5. `supabase/migrations/005_local_auth.sql` — регистрация без письма, первый пользователь — админ
+5. `supabase/migrations/005_local_auth.sql` — регистрация без письма
+6. `supabase/migrations/006_admin_lockdown.sql` — админ только по белому списку e-mail
 
 Каждый — кнопкой **Run**. Ошибок быть не должно.
 
@@ -73,10 +74,37 @@ SQL Editor'а без `auth.uid()`, то есть как раз «не админ
 
 **Authentication → Providers → Email**: включён.
 
-**«Confirm email» трогать не обязательно.** `005_local_auth.sql` подтверждает почту
-триггером на уровне базы, поэтому регистрация работает и при включённом флажке. Если
-выключите его вручную — тоже ничего не сломается, просто сайт перестанет зависеть от
-этого триггера. Включать SMTP ради турнира не нужно.
+**«Confirm email» выключен.** `005_local_auth.sql` подтверждает почту триггером на
+уровне базы, поэтому регистрация работает без SMTP. Обратная сторона: сайт не проверяет,
+что адрес принадлежит регистрирующемуся, — любой может занять чужой e-mail и войти под
+ним. Админку это не открывает: роль `admin` выдаётся только адресам из
+`public.admin_whitelist` (`006_admin_lockdown.sql`), а подменить роль через клиент
+запрещает триггер `profiles_guard`. Но занятый адрес реальному владельцу уже не вернуть,
+поэтому непубличные адреса оргкомитета — единственная защита; при желании включайте
+Confirm email с SMTP, схема это поддерживает.
+
+**Белый список админов** — заполняется в SQL Editor один раз:
+
+```sql
+insert into public.admin_whitelist (email, note)
+values ('ваш@адрес', 'председатель оргкомитета')
+on conflict (email) do nothing;
+```
+
+Проверка после регистрации:
+
+```sql
+select u.email, p.role from public.profiles p join auth.users u on u.id = p.id;
+```
+
+Ожидается `admin` у белого адреса и `user` у всех остальных. Ошибочно выданные роли
+(если 006 применена позже, чем кто-то зарегистрировался первым) понижаются так:
+
+```sql
+update public.profiles set role = 'user'
+where role = 'admin' and id not in (
+  select id from auth.users where email in (select email from public.admin_whitelist));
+```
 
 **Authentication → URL Configuration** (нужно только для писем — сброса пароля):
 - Site URL: `https://<ваш-логин>.github.io/<имя-репозитория>/`
