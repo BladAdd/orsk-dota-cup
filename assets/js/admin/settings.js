@@ -16,7 +16,7 @@
   const T = tour.data || {};
   const S = site.data?.value || {};
   const C = contacts.data?.value || {};
-  const P = prize.data?.value || { total: 15000, split: [{ place: 1, amount: 9000 }, { place: 2, amount: 4000 }, { place: 3, amount: 2000 }] };
+  const P = prize.data?.value || { total: 15000, split: [{ place: 1, amount: 15000 }] };
 
   const dt = iso => toLocalInput(iso);
   const f = {};
@@ -105,15 +105,14 @@
   // --- Призовые ---
   const pBox = el('div', { class: 'panel', style: 'margin-top:22px' }, [el('div', { class: 'panel-title' }, [el('h3', { text: 'Призовой фонд' })])]);
   const total = el('input', { type: 'number', value: String(P.total) });
-  // Всегда три места, даже если в базе лежит неполный split: иначе правку
-  // «в 0 / 0» нельзя было вернуть обратно через эту форму.
-  const amounts = [0, 1, 2].map(i => {
+  // Одно поле: фонд целиком за первое место (второго и третьего приза нет).
+  const amounts = [0].map(i => {
     const row = (P.split || []).find(s => s.place === i + 1);
-    return el('input', { type: 'number', value: String(row ? row.amount : 0), style: 'width:120px' });
+    return el('input', { type: 'number', value: String(row ? row.amount : 0), style: 'width:160px' });
   });
   pBox.append(
     el('div', { class: 'field' }, [el('label', { text: 'Всего, ₽' }), total]),
-    el('div', { class: 'field' }, [el('label', { text: '1 / 2 / 3 место, ₽' }),
+    el('div', { class: 'field' }, [el('label', { text: 'Победителю, ₽' }),
       el('div', { style: 'display:flex;gap:10px' }, amounts)])
   );
   const saveP = el('button', { class: 'btn btn-primary btn-sm', text: 'Сохранить призовые' });

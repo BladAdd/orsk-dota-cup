@@ -35,9 +35,7 @@ insert into public.settings (key, value) values
   ('prize', jsonb_build_object(
      'total', 15000,
      'split', jsonb_build_array(
-        jsonb_build_object('place', 1, 'amount', 9000),
-        jsonb_build_object('place', 2, 'amount', 4000),
-        jsonb_build_object('place', 3, 'amount', 2000)))),
+        jsonb_build_object('place', 1, 'amount', 15000)))),
   ('social', jsonb_build_object('og_image', 'assets/img/og-image.png'))
 on conflict (key) do update set value = excluded.value;
 
@@ -49,6 +47,10 @@ values
    'Орское городское отделение КПРФ — генеральный спонсор турнира: призовой фонд, площадка финала и награждение.', 0)
 on conflict (id) do nothing;
 
+-- ВНИМАНИЕ ПО ПРИЗАМ. Схема одна: весь фонд 15 000 ₽ — за первое место,
+-- приз получает капитан команды-победителя; призов за второе и третье место
+-- нет. Так же это закреплено в 007_schedule_and_prizes.sql.
+--
 -- Команды (14, пары первого раунда) ----------------------------------
 -- Триггер teams_guard из 002_rls.sql принудительно ставит status='pending'
 -- для всех вставок не от админа, а сид выполняется из SQL Editor'а без
