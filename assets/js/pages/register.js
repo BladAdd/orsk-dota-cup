@@ -6,6 +6,15 @@
   if (!window.DB.ready) { host.append(el('div', { class: 'empty-state' }, [
     el('div', { class: 'big', text: 'Регистрация откроется после подключения базы' })])); return; }
 
+  // В демо-режиме заявка никуда не уходит: показываем это сразу, чтобы
+  // никто не ждал подтверждения от оргкомитета.
+  if (window.SITE_CONFIG.demoMode) {
+    host.append(el('div', { class: 'panel', style: 'margin-bottom:18px' }, [
+      el('p', { class: 'muted', style: 'font-size:14px;margin:0',
+        text: 'Демо-режим: база отключена. Анкета работает как макет — заявка остаётся в браузере и никому не отправляется.' })
+    ]));
+  }
+
   window.Auth.onChange(() => render());
 
   async function render() {

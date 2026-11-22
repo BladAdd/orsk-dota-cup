@@ -51,8 +51,11 @@
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
       tour = r.data;
     } catch (e) { return null; }
-    if (!tour || tour.status !== 'live') return null;
-    if (tour.ends_at && new Date(tour.ends_at).getTime() < Date.now()) return null;
+    if (!tour) return null;
+    // Показываем плашку только в живом состоянии или сразу после финала
+    const finished = tour.status === 'finished' || tour.status === 'bracket';
+    if (tour.status !== 'live' && !finished) return null;
+    if (tour.status === 'live' && tour.ends_at && new Date(tour.ends_at).getTime() < Date.now()) return null;
 
     // Представление матчей, а если база ещё до миграции 008 — таблица
     // явным списком колонок (внутренние поля не трогаем).
@@ -83,6 +86,16 @@
       .find(m => new Date(m.scheduled_at).getTime() >= now - 20 * 60 * 1000);
 
     const pair = m => (names[m.team_a] || '—') + ' — ' + (names[m.team_b] || '—');
+
+    if (finished) {
+      // Итог турнира: победитель финала, ссылка на сетку
+      const last = matches.reduce((a, m) => (!a || m.round > a.round) ? m : a, null);
+      const champ = last && last.winner_id ? names[last.winner_id] : null;
+      return {
+        kind: 'done',
+        text: champ ? 'турнир завершён · победитель: ' + champ : 'турнир завершён'
+      };
+    }
     if (inGame && inGame.team_a && inGame.team_b) {
       return { kind: 'live', text: pair(inGame) + ' · BO' + inGame.best_of };
     }
@@ -101,7 +114,7 @@
     host.append(el('div', { class: 'live-bar' }, [
       el('div', { class: 'container inner' }, [
         el('span', { class: 'dot', 'aria-hidden': 'true' }),
-        el('span', { class: 'lbl', text: live.kind === 'live' ? 'идёт матч' : 'турнир идёт' }),
+        el('span', { class: 'lbl', text: live.kind === 'live' ? 'идёт матч' : (live.kind === 'done' ? 'финал сыгран' : 'турнир идёт') }),
         el('span', { class: 'txt', text: live.text }),
         el('span', { class: 'grow' }),
         el('a', { class: 'btn btn-gold btn-sm', href: ROOT + 'bracket.html', text: 'К сетке' }),
@@ -213,10 +226,13 @@
       ]),
       el('div', { class: 'legal' }, [
         el('span', { class: 'age-mark', text: window.SITE_CONFIG.ageRating }),
+        window.SITE_CONFIG.demoMode
+          ? el('span', { class: 'badge gold', text: 'демо-режим: база отключена, результаты и сообщения примерные' })
+          : null,
         el('span', { text: '© ' + year + ' Оргкомитет «' + siteTitle() + '»' }),
         el('span', { text: 'Dota 2 — товарный знак Valve Corporation. Сайт не аффилирован с Valve и не спонсируется ею.' }),
         el('span', { class: 'mono faint', text: window.SITE_CONFIG.timezoneLabel })
-      ])
+      ].filter(Boolean))
     ]));
   }
 

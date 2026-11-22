@@ -13,6 +13,13 @@ window.SITE_CONFIG = {
   // secret-ключ (sb_secret_…) и service_role сюда класть нельзя никогда.
   supabaseAnonKey: 'sb_publishable_rD56w-Y8ndum61UC6DAo-g_ln6pBDD1',
 
+  // Демо-режим: сайт работает без базы данных, из assets/js/demo-data.js.
+  // Включён — потому что сайт нужен как макет: база отключена, данных и
+  // сообщений из Supabase нет, всё берётся из локального набора.
+  // Вернуть настоящую базу: поставить false (тогда снова работает Supabase
+  // по адресу и ключу выше).
+  demoMode: true,
+
   // Часовой пояс турнира и подписи в интерфейсе
   timezone: 'Asia/Yekaterinburg',
   timezoneLabel: 'время екатеринбургское (UTC+5)',

@@ -14,6 +14,16 @@
 
   async function init(title) {
     document.body.classList.add('admin');
+    if (window.SITE_CONFIG.demoMode) {
+      document.body.append(el('div', { class: 'section container' }, [
+        el('div', { class: 'empty-state' }, [
+          el('div', { class: 'big', text: 'Админка в демо-режиме отключена' }),
+          el('p', { text: 'Сайт работает без базы данных: правки сохранять некуда. Выключите demoMode в assets/js/config.js, чтобы вернуться к настоящей базе.' }),
+          el('a', { class: 'btn btn-ghost btn-sm', href: '../index.html', text: 'На сайт' })
+        ])
+      ]));
+      return false;
+    }
     if (!window.DB.ready) {
       document.body.prepend(el('div', { class: 'setup-banner',
         text: 'База не подключена: заполните assets/js/config.js (см. supabase/SETUP.md).' }));

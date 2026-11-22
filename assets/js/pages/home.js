@@ -24,7 +24,31 @@
   if (tour) {
     $('#fact-start').textContent = fmtDate(tour.starts_at).replace(/ \d{4} г\.$/, '');
     $('#fact-teams').textContent = teamList.length + ' / ' + tour.max_teams;
-    startCountdown(tour);
+    // Для завершённого турнира отсчёт не нужен: показываем итог
+    if (tour.status === 'finished') {
+      const label = $('#cd-label');
+      if (label) label.textContent = 'турнир завершён';
+      setChampion(tour);
+    } else {
+      startCountdown(tour);
+    }
+  }
+
+  // Победитель финала — в подписи hero, чтобы главная сразу отвечала
+  // на вопрос «чем закончилось».
+  async function setChampion(t) {
+    try {
+      const { data } = await sb.from('v_matches_public').select('round,best_of,team_a,team_b,winner_id,status,scheduled_at')
+        .eq('tournament_id', t.id);
+      const list = data || [];
+      const last = list.reduce((a, m) => (!a || m.round > a.round) ? m : a, null);
+      if (!last || !last.winner_id) return;
+      const { data: teamsAll } = await sb.from('v_teams_public').select('id,name');
+      const champ = (teamsAll || []).find(x => x.id === last.winner_id);
+      if (!champ) return;
+      const host = $('#champion-line');
+      if (host) host.textContent = 'Чемпион: ' + champ.name + ' — финал BO' + last.best_of;
+    } catch (e) { /* подпись не критична для страницы */ }
   }
   // Название в hero берём из настроек: шапка уже показывает короткое
   // название из базы, и h1 не должен с ней расходиться.
