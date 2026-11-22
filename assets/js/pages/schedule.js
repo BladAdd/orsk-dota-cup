@@ -10,7 +10,16 @@
     .select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (!tour) { host.append(el('div', { class: 'empty-state' }, [el('div', { class: 'big', text: 'Турнир ещё не создан' })])); return; }
 
-  const { matches, teams } = await window.Bracket.load(window.DB.sb, tour.id);
+  let loaded;
+  try {
+    loaded = await window.Bracket.load(window.DB.sb, tour.id);
+  } catch (e) {
+    host.append(el('div', { class: 'empty-state' }, [
+      el('div', { class: 'big', text: 'Не удалось загрузить расписание' }),
+      el('p', { text: 'Техническая ошибка чтения матчей. Обновите страницу позже.' })]));
+    return;
+  }
+  const { matches, teams } = loaded;
   const tmap = window.Bracket.teamMap(teams);
   const scheduled = matches.filter(m => m.scheduled_at).sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
 

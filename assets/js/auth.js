@@ -2,6 +2,7 @@
 (function () {
   const { $ } = window.UI;
   let cache = { session: undefined, profile: undefined };
+  let ready = null;
   const listeners = [];
 
   async function refresh() {
@@ -62,14 +63,18 @@
     get isAdmin() { return !!(cache.profile && cache.profile.role === 'admin'); },
     get isStaff() { return !!(cache.profile && ['admin', 'judge'].includes(cache.profile.role)); },
     get isBanned() { return !!(cache.profile && cache.profile.banned_until && new Date(cache.profile.banned_until) > new Date()); },
+    // Промис первого чтения сессии: страницы ждут его, чтобы не показывать
+    // «войдите» уже вошедшему пользователю.
+    get ready() { return ready || Promise.resolve(cache); },
     refresh, signup, login, logout, updateProfile,
     onChange(fn) { listeners.push(fn); if (cache.session !== undefined) fn(cache); }
   };
 
   if (window.DB.ready) {
     window.DB.sb.auth.onAuthStateChange(() => refresh());
-    refresh();
+    ready = refresh();
   } else {
     cache = { session: null, profile: null };
+    ready = Promise.resolve(cache);
   }
 })();

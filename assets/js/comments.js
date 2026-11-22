@@ -1,6 +1,17 @@
-/* Живые комментарии с премодерацией: дерево, лайки, ответы, жалобы. */
+/* Живые комментарии с премодерацией: дерево, лайки, ответы, жалобы.
+ *
+ * Лайки идут через функции toggle_comment_reaction/my_reactions: прямая
+ * запись в comment_reactions закрыта политиками (008_security_and_likes.sql),
+ * потому что старая политика удаления позволяла гостю стирать все отметки
+ * разом. Функция работает только с парой (комментарий, ключ голосующего).
+ */
 (function () {
   const { $, el, esc, fmtFull, toast, voterKey } = window.UI;
+
+  // Ключ голосующего: у вошедшего — его uid, у гостя — отпечаток браузера
+  function reactionKey() {
+    return window.Auth.user ? window.Auth.user.id : voterKey();
+  }
 
   async function mount(host, pageKey) {
     host.innerHTML = '';
@@ -13,12 +24,13 @@
     }
 
     const sb = window.DB.sb;
-    const [{ data: rows }, { data: myReactions }] = await Promise.all([
+    const key = reactionKey();
+    const [commentsRes, myReactionsRes] = await Promise.all([
       sb.from('v_comments_public').select('*').eq('page_key', pageKey).order('created_at', { ascending: true }),
-      sb.from('comment_reactions').select('comment_id').eq('voter_key', window.Auth.user ? window.Auth.user.id : voterKey())
+      sb.rpc('my_reactions', { p_voter_key: key })
     ]);
-    const liked = new Set((myReactions || []).map(r => r.comment_id));
-    const all = rows || [];
+    const liked = new Set(myReactionsRes.data || []);
+    const all = commentsRes.data || [];
 
     host.append(el('h3', { text: 'Обсуждение' }));
 
@@ -63,7 +75,8 @@
       btn.disabled = true;
       const { error } = await window.DB.sb.from('comments').insert({
         page_key: pageKey, parent_id: parentId, author_id: window.Auth.user.id,
-        author_name: window.Auth.profile?.nickname || window.Auth.user.email, body
+        // Никогда не подставляем сюда e-mail: author_name выводится на сайте.
+        author_name: window.Auth.profile?.nickname || '', body
       });
       btn.disabled = false;
       if (error) { toast('Не удалось отправить: ' + error.message, 'error'); return; }
@@ -75,33 +88,30 @@
 
   function node(c, all, liked, pageKey, reload) {
     const kids = all.filter(x => x.parent_id === c.id);
-    const isMine = window.Auth.user && window.Auth.user.id === c.author_id;
 
     const likeBtn = el('button', { class: liked.has(c.id) ? 'liked' : '', onclick: toggleLike }, [
       document.createTextNode('▲ '), el('span', { text: String(c.likes_count) })
     ]);
     async function toggleLike() {
-      const key = window.Auth.user ? window.Auth.user.id : voterKey();
-      if (liked.has(c.id)) {
-        await window.DB.sb.from('comment_reactions').delete().eq('comment_id', c.id).eq('voter_key', key);
-      } else {
-        const { error } = await window.DB.sb.from('comment_reactions').insert({ comment_id: c.id, voter_key: key });
-        if (error) { toast('Не удалось поставить отметку', 'error'); return; }
-      }
+      const { error } = await window.DB.sb.rpc('toggle_comment_reaction', {
+        p_comment_id: c.id, p_voter_key: reactionKey()
+      });
+      if (error) { toast('Не удалось поставить отметку: ' + error.message, 'error'); return; }
       reload();
     }
 
     const actions = [likeBtn];
     if (window.Auth.user && !window.Auth.isBanned) {
       actions.push(el('button', { text: 'Ответить', onclick: () => {
-        const existing = box.querySelector(':scope > .c-form');
+        const existing = box.querySelector('.c-form');
         if (existing) { existing.remove(); return; }
         box.append(form(c.id, pageKey, reload));
       } }));
     }
     actions.push(el('button', { text: 'Пожаловаться', onclick: async () => {
-      const reason = prompt('Причина жалобы (оскорбление, спам, слив личных данных…):');
+      const reason = (prompt('Причина жалобы (оскорбление, спам, слив личных данных…):') || '').trim();
       if (!reason) return;
+      if (reason.length < 3) { toast('Опишите причину подробнее', 'error'); return; }
       const { error } = await window.DB.sb.from('comment_reports').insert({
         comment_id: c.id, reporter_id: window.Auth.user ? window.Auth.user.id : null, reason
       });
@@ -131,3 +141,4 @@
 
   window.Comments = { mount };
 })();
+

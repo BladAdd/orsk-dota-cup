@@ -37,6 +37,45 @@
   const fmtFull = iso => iso ? dtfFull.format(new Date(iso)) : '—';
   const fmtMoney = n => new Intl.NumberFormat('ru-RU').format(n) + ' ₽';
 
+  // --- Время турнира ↔ <input type="datetime-local"> -------------------
+  // Поля в админке подписаны «UTC+5», а браузер отдаёт локальное время
+  // пользователя, поэтому переводим явно. Без этого сохранение сдвигало
+  // время на разницу поясов при каждом открытии формы.
+  const dtfParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ, hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+
+  function tzParts(date) {
+    const out = {};
+    dtfParts.formatToParts(date).forEach(p => { if (p.type !== 'literal') out[p.type] = p.value; });
+    return out;
+  }
+
+  function tzOffsetMs(date) {
+    const p = tzParts(date);
+    const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+    return asUTC - date.getTime();
+  }
+
+  // ISO из базы -> строка для datetime-local во времени турнира
+  function toLocalInput(iso) {
+    if (!iso) return '';
+    const p = tzParts(new Date(iso));
+    return p.year + '-' + p.month + '-' + p.day + 'T' + p.hour + ':' + p.minute;
+  }
+
+  // Строка datetime-local (время турнира) -> ISO UTC для базы
+  function fromLocalInput(v) {
+    if (!v) return null;
+    const [d, t] = String(v).split('T');
+    const [Y, M, D] = d.split('-').map(Number);
+    const [h, mi] = (t || '00:00').split(':').map(Number);
+    const guess = Date.UTC(Y, M - 1, D, h, mi);
+    return new Date(guess - tzOffsetMs(new Date(guess))).toISOString();
+  }
+
   function plural(n, forms) {
     const a = Math.abs(n) % 100, b = a % 10;
     if (a > 10 && a < 20) return forms[2];
@@ -110,5 +149,5 @@
     if (err) err.textContent = value || '';
   }
 
-  window.UI = { $, $$, el, esc, fmtDate, fmtShort, fmtTime, fmtFull, fmtMoney, plural, voterKey, toast, modal, confirmBox, ROLE_LABEL, TEAM_STATUS, MATCH_STATUS, setStatus };
+  window.UI = { $, $$, el, esc, fmtDate, fmtShort, fmtTime, fmtFull, fmtMoney, plural, voterKey, toast, modal, confirmBox, toLocalInput, fromLocalInput, ROLE_LABEL, TEAM_STATUS, MATCH_STATUS, setStatus };
 })();

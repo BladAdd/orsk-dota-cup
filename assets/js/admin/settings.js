@@ -1,6 +1,6 @@
 /* Настройки: турнир, реквизиты сайта, контакты, призовые, спонсоры. */
 (async function () {
-  const { el, toast } = window.UI;
+  const { el, toast, toLocalInput, fromLocalInput } = window.UI;
   const ok = await window.AdminShell.init('Настройки');
   if (!ok) return;
   const main = window.AdminShell.main();
@@ -18,7 +18,7 @@
   const C = contacts.data?.value || {};
   const P = prize.data?.value || { total: 15000, split: [{ place: 1, amount: 9000 }, { place: 2, amount: 4000 }, { place: 3, amount: 2000 }] };
 
-  const dt = iso => iso ? iso.slice(0, 16) : '';
+  const dt = iso => toLocalInput(iso);
   const f = {};
   function field(key, label, value, type) {
     const i = el('input', { type: type || 'text', value: value == null ? '' : value });
@@ -55,14 +55,14 @@
       title: f.title.value.trim(), subtitle: f.subtitle.value.trim(),
       max_teams: +f.max_teams.value || 16, team_size: +f.team_size.value || 5,
       prize_fund: +f.prize_fund.value || 0,
-      registration_opens: f.reg_opens.value ? f.reg_opens.value + ':00+05:00' : null,
-      registration_closes: f.reg_closes.value ? f.reg_closes.value + ':00+05:00' : null,
-      starts_at: f.starts.value ? f.starts.value + ':00+05:00' : null,
-      ends_at: f.ends.value ? f.ends.value + ':00+05:00' : null,
+      registration_opens: fromLocalInput(f.reg_opens.value),
+      registration_closes: fromLocalInput(f.reg_closes.value),
+      starts_at: fromLocalInput(f.starts.value),
+      ends_at: fromLocalInput(f.ends.value),
       venue: f.venue.value.trim(), status: f.status.value
     };
-    const q = T.id ? sb.from('tournaments').update(payload).eq('id', T.id) : sb.from('tournaments').insert(payload);
-    const { error } = await q;
+    if (!T.id) { toast('В базе нет ни одного турнира — сначала примените сид', 'error'); return; }
+    const { error } = await sb.from('tournaments').update(payload).eq('id', T.id);
     if (error) { toast('Ошибка: ' + error.message, 'error'); return; }
     toast('Турнир сохранён', 'ok');
   };
@@ -105,7 +105,12 @@
   // --- Призовые ---
   const pBox = el('div', { class: 'panel', style: 'margin-top:22px' }, [el('div', { class: 'panel-title' }, [el('h3', { text: 'Призовой фонд' })])]);
   const total = el('input', { type: 'number', value: String(P.total) });
-  const amounts = (P.split || []).map(s => el('input', { type: 'number', value: String(s.amount), style: 'width:120px' }));
+  // Всегда три места, даже если в базе лежит неполный split: иначе правку
+  // «в 0 / 0» нельзя было вернуть обратно через эту форму.
+  const amounts = [0, 1, 2].map(i => {
+    const row = (P.split || []).find(s => s.place === i + 1);
+    return el('input', { type: 'number', value: String(row ? row.amount : 0), style: 'width:120px' });
+  });
   pBox.append(
     el('div', { class: 'field' }, [el('label', { text: 'Всего, ₽' }), total]),
     el('div', { class: 'field' }, [el('label', { text: '1 / 2 / 3 место, ₽' }),

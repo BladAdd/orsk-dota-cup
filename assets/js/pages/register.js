@@ -47,8 +47,8 @@
       btn.disabled = true;
       try {
         await window.Auth.signup({ email: v('email'), password: v('password'), nickname: v('nickname'), fullName: v('fullName') });
-        // Первый зарегистрировавшийся получает роль admin (005_local_auth.sql) —
-        // капитану сюда идти незачем, а оргкомитету сразу нужна панель.
+        // Роль admin выдаётся только адресам из public.admin_whitelist
+        // (006_admin_lockdown.sql) — оргкомитет попадает в панель сразу.
         if (window.Auth.isAdmin) { location.href = 'admin/index.html'; return; }
         toast('Аккаунт создан', 'ok');
       } catch (err) { toast('Ошибка регистрации: ' + err.message, 'error'); btn.disabled = false; }
@@ -90,10 +90,13 @@
     box.append(el('h4', { text: 'Состав (5 игроков + запасной)', style: 'margin-top:22px' }));
     const rows = [];
     const roles = Object.keys(ROLE_LABEL);
+    // Шестая строка — запасной, а не тренер: раньше здесь подставлялась
+    // шестая роль из ROLE_LABEL, то есть 'coach'.
+    const DEFAULT_ROLES = ['carry', 'mid', 'offlane', 'soft_support', 'hard_support', 'standin'];
     for (let i = 0; i < 6; i++) {
       const nick = input('text', '', true);
       const role = el('select', {}, roles.map(r => el('option', { value: r, text: ROLE_LABEL[r] })));
-      if (roles[i]) role.value = roles[i];
+      role.value = DEFAULT_ROLES[i] || 'standin';
       const steam = input('text', '', false); steam.input.placeholder = 'Steam ID (например 105698964)';
       const phone = input('tel', '', false); phone.input.placeholder = 'Телефон (только для оргкомитета)';
       const cap = el('input', { type: 'radio', name: 'captain', value: String(i) });

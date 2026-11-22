@@ -11,17 +11,20 @@
     window.DB.sb.from('sponsors').select('*').eq('tier', 'title').limit(1)
   ]);
 
-  const split = (prize && prize.value && prize.value.split) || [
+  const split = ((prize && prize.value && prize.value.split) || [
     { place: 1, amount: 9000 }, { place: 2, amount: 4000 }, { place: 3, amount: 2000 }
-  ];
+  ]).filter(s => s && +s.amount > 0);
   const medals = ['I', 'II', 'III'];
   const titles = ['Первое место', 'Второе место', 'Третье место'];
 
+  // Ноль в сумме места — это ещё не настроенный приз, а не «0 ₽ за второе
+  // место»: такие строки не показываем (в базе фонд мог остаться 15 000/0/0).
   split.forEach((s, i) => {
-    host.append(el('div', { class: 'panel center', style: i === 0 ? 'border-color:#6b5220' : '' }, [
-      el('div', { style: 'font-family:var(--font-display);font-size:26px;color:var(--red);letter-spacing:.1em', text: medals[i] || '' }),
+    const place = +s.place || i + 1;
+    host.append(el('div', { class: 'panel center', style: place === 1 ? 'border-color:#6b5220' : '' }, [
+      el('div', { style: 'font-family:var(--font-display);font-size:26px;color:var(--red);letter-spacing:.1em', text: medals[place - 1] || '' }),
       el('div', { style: 'font-family:var(--font-display);font-size:30px;color:var(--gold);margin:8px 0', text: fmtMoney(s.amount) }),
-      el('div', { class: 'muted', text: titles[i] || (s.place + ' место') })
+      el('div', { class: 'muted', text: titles[place - 1] || (place + ' место') })
     ]));
   });
 

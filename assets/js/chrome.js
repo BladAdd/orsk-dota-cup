@@ -1,7 +1,10 @@
-/* Шапка и подвал: рисуются на каждой странице, чтобы не дублировать разметку. */
+/* Шапка и подвал: рисуются на каждой странице, чтобы не дублировать разметку.
+ * Название турнира берётся из настроек базы (settings.site), поэтому шапка,
+ * подвал и заголовок вкладки не расходятся с тем, что ввёл оргкомитет. */
 (function () {
   const { $, el, esc } = window.UI;
   const ROOT = document.documentElement.dataset.root || '';
+  const FALLBACK_TITLE = 'Красный кубок по Dota 2';
 
   const NAV = [
     ['index.html', 'Главная'],
@@ -13,17 +16,6 @@
     ['news.html', 'Новости']
   ];
 
-  const EMBLEM = `
-    <svg class="mark" viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M24 2 L44 9 V25 C44 36 35 43 24 46 C13 43 4 36 4 25 V9 Z"
-            fill="#8d1119" stroke="#d9a441" stroke-width="2"/>
-      <path d="M24 6 L40 11.5 V25 C40 33.5 33 39.5 24 42 C15 39.5 8 33.5 8 25 V11.5 Z"
-            fill="#d21f2b"/>
-      <path d="M24 12 l3.1 6.6 7.2 .9 -5.3 5 1.4 7.1 -6.4 -3.5 -6.4 3.5 1.4 -7.1 -5.3 -5 7.2 -.9 Z"
-            fill="#d9a441"/>
-      <rect x="14" y="34" width="20" height="2.4" fill="#d9a441"/>
-    </svg>`;
-
   let settings = null;
 
   async function loadSettings() {
@@ -34,6 +26,88 @@
     const out = {};
     data.forEach(r => { out[r.key] = r.value; });
     return out;
+  }
+
+  const siteTitle = () => (settings && settings.site && settings.site.title) || FALLBACK_TITLE;
+
+  // Заголовок вкладки: «<страница> — <название турнира>». Название турнира
+  // берём из настроек, название страницы — из data-page-title в <html>,
+  // поэтому в статических тегах <title> оно не дублируется.
+  function applyTitle() {
+    const page = document.documentElement.dataset.pageTitle;
+    document.title = page ? page + ' — ' + siteTitle() : siteTitle();
+  }
+
+  // ---- Плашка «турнир идёт» ------------------------------------------
+  // Показываем только когда турнир действительно идёт (status = 'live' и
+  // время финала не прошло) — ничего не выдумываем: ближайший матч, счёт
+  // сыгранных и ссылки берутся из базы.
+  async function loadLive() {
+    if (!window.DB.ready) return null;
+    const sb = window.DB.sb;
+    let tour;
+    try {
+      const r = await sb.from('tournaments').select('id,status,ends_at')
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      tour = r.data;
+    } catch (e) { return null; }
+    if (!tour || tour.status !== 'live') return null;
+    if (tour.ends_at && new Date(tour.ends_at).getTime() < Date.now()) return null;
+
+    // Представление матчей, а если база ещё до миграции 008 — таблица
+    // явным списком колонок (внутренние поля не трогаем).
+    let matches = [];
+    try {
+      const v = await sb.from('v_matches_public')
+        .select('id,round,match_index,best_of,team_a,team_b,status,scheduled_at')
+        .eq('tournament_id', tour.id);
+      if (v.error) throw v.error;
+      matches = v.data || [];
+    } catch (e) {
+      const t = await sb.from('bracket_matches')
+        .select('id,round,match_index,best_of,team_a,team_b,status,scheduled_at')
+        .eq('tournament_id', tour.id);
+      matches = t.data || [];
+    }
+
+    const { data: teams } = await sb.from('v_teams_public').select('id,name');
+    const names = {};
+    (teams || []).forEach(t => { names[t.id] = t.name; });
+
+    const played = matches.filter(m => m.status === 'finished' || m.status === 'walkover').length;
+    const inGame = matches.find(m => m.status === 'live');
+    const now = Date.now();
+    const next = matches
+      .filter(m => m.status === 'pending' && m.scheduled_at)
+      .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
+      .find(m => new Date(m.scheduled_at).getTime() >= now - 20 * 60 * 1000);
+
+    const pair = m => (names[m.team_a] || '—') + ' — ' + (names[m.team_b] || '—');
+    if (inGame && inGame.team_a && inGame.team_b) {
+      return { kind: 'live', text: pair(inGame) + ' · BO' + inGame.best_of };
+    }
+    if (next && next.team_a && next.team_b) {
+      return { kind: 'next', text: 'ближайший матч ' + window.UI.fmtFull(next.scheduled_at) + ' · ' + pair(next) };
+    }
+    return { kind: 'stat', text: 'сыграно матчей: ' + played + ' из ' + matches.length + '. Сетка обновляется по ходу турнира.' };
+  }
+
+  async function renderLiveBar() {
+    const host = $('#site-header');
+    if (!host) return;
+    let live = null;
+    try { live = await loadLive(); } catch (e) { live = null; }
+    if (!live) return;
+    host.append(el('div', { class: 'live-bar' }, [
+      el('div', { class: 'container inner' }, [
+        el('span', { class: 'dot', 'aria-hidden': 'true' }),
+        el('span', { class: 'lbl', text: live.kind === 'live' ? 'идёт матч' : 'турнир идёт' }),
+        el('span', { class: 'txt', text: live.text }),
+        el('span', { class: 'grow' }),
+        el('a', { class: 'btn btn-gold btn-sm', href: ROOT + 'bracket.html', text: 'К сетке' }),
+        el('a', { class: 'btn btn-ghost btn-sm', href: ROOT + 'schedule.html', text: 'Расписание' })
+      ])
+    ]));
   }
 
   function currentFile() {
@@ -51,8 +125,22 @@
       })));
 
     const actions = el('div', { class: 'header-actions' });
-    const burger = el('button', { class: 'burger', 'aria-label': 'Меню', text: '☰',
-      onclick: () => nav.classList.toggle('open') });
+    const burger = el('button', {
+      class: 'burger', type: 'button', 'aria-label': 'Меню', 'aria-expanded': 'false', 'aria-controls': 'main-nav',
+      text: '☰'
+    });
+    function toggleNav(open) {
+      const isOpen = open == null ? !nav.classList.contains('open') : open;
+      nav.classList.toggle('open', isOpen);
+      burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+    burger.addEventListener('click', e => { e.stopPropagation(); toggleNav(); });
+    // Закрываем меню по клику вне него и по переходу — иначе на телефоне
+    // оно остаётся открытым поверх страницы.
+    document.addEventListener('click', e => {
+      if (nav.classList.contains('open') && !nav.contains(e.target) && e.target !== burger) toggleNav(false);
+    });
+    nav.addEventListener('click', e => { if (e.target.closest('a')) toggleNav(false); });
 
     const brand = el('a', { class: 'brand', href: ROOT + 'index.html' });
     const marks = el('span', { class: 'brand-marks' }, [
@@ -61,7 +149,7 @@
     ]);
     brand.append(marks);
     const nameBox = el('span', { class: 'name' });
-    nameBox.append(document.createTextNode(settings?.site?.short_title || 'Кубок Орска'));
+    nameBox.append(document.createTextNode((settings && settings.site && settings.site.short_title) || 'Красный кубок'));
     nameBox.append(el('small', { text: 'Dota 2 · Орск' }));
     brand.append(nameBox);
 
@@ -102,7 +190,7 @@
     host.append(el('div', { class: 'container' }, [
       el('div', { class: 'cols' }, [
         el('div', {}, [
-          el('h4', { text: 'Кубок Орска по Dota 2' }),
+          el('h4', { text: siteTitle() }),
           el('p', { class: 'muted', text: 'Открытый любительский турнир Оренбуржья. Призовой фонд 15 000 ₽ предоставлен Орским городским отделением КПРФ.' }),
           el('p', { class: 'faint', style: 'font-size:12px', text: 'Оргкомитет: ' + (c.judge || 'судейская бригада турнира') })
         ]),
@@ -114,14 +202,18 @@
         el('div', {}, [
           el('h4', { text: 'Оргкомитет' }),
           ...(social.length
-            ? social.map(([k, href, label]) => el('a', { href, target: k === 'mail' ? '' : '_blank', rel: 'noopener', text: label }))
+            ? social.map(([k, href, label]) => {
+                const a = el('a', { href, text: label });
+                if (k !== 'mail') { a.target = '_blank'; a.rel = 'noopener'; }
+                return a;
+              })
             : [el('span', { class: 'faint', text: 'Контакты появятся после открытия регистрации' })]),
           el('a', { href: ROOT + 'privacy.html', text: 'Обработка персональных данных' })
         ])
       ]),
       el('div', { class: 'legal' }, [
         el('span', { class: 'age-mark', text: window.SITE_CONFIG.ageRating }),
-        el('span', { text: '© ' + year + ' Оргкомитет Кубка Орска по Dota 2' }),
+        el('span', { text: '© ' + year + ' Оргкомитет «' + siteTitle() + '»' }),
         el('span', { text: 'Dota 2 — товарный знак Valve Corporation. Сайт не аффилирован с Valve и не спонсируется ею.' }),
         el('span', { class: 'mono faint', text: window.SITE_CONFIG.timezoneLabel })
       ])
@@ -131,9 +223,14 @@
   window.Chrome = {
     get settings() { return settings; },
     async init() {
+      // Ждём первую проверку сессии: иначе уже вошедший капитан видит
+      // «Войти», а комментарии предлагают войти повторно.
+      await window.Auth.ready;
       settings = await loadSettings();
+      applyTitle();
       renderHeader();
       renderFooter();
+      renderLiveBar();
       // плашку о неподключённой базе показываем только оргкомитету, не посетителям
       if (!window.DB.ready && /\/admin(\/|$)/.test(location.pathname)) window.DB.setupBanner();
     }

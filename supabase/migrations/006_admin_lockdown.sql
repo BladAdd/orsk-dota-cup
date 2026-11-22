@@ -42,9 +42,11 @@ create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
   is_trusted boolean;
-  mail       text := lower(coalesce(new.email, ''));
+  mail       text := lower(btrim(coalesce(new.email, '')));
 begin
-  select exists (select 1 from public.admin_whitelist where email = mail) into is_trusted;
+  -- Точное сравнение без учёта регистра: адрес из формы может быть с большой
+  -- буквой, а в белом списке он записан строчными.
+  select exists (select 1 from public.admin_whitelist where lower(email) = mail) into is_trusted;
 
   insert into public.profiles (id, nickname, full_name, role)
   values (
@@ -52,7 +54,7 @@ begin
     coalesce(new.raw_user_meta_data ->> 'nickname', ''),
     coalesce(new.raw_user_meta_data ->> 'full_name', ''),
     case
-      when is_trusted and is_first then 'admin'::public.user_role
+      when is_trusted then 'admin'::public.user_role
       else 'user'::public.user_role
     end
   )

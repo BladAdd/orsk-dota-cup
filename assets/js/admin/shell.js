@@ -47,7 +47,7 @@
     const here = location.pathname.split('/').pop() || 'index.html';
     const side = el('aside', { class: 'admin-side' }, [
       el('div', { class: 'side-brand' }, [
-        document.createTextNode('Кубок Орска'),
+        document.createTextNode('Красный кубок'),
         el('small', { text: 'панель оргкомитета' })
       ])
     ]);

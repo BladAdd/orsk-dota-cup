@@ -1,7 +1,7 @@
 /* Админка матчей: счёт, победитель, статус, дата, карта, ссылки.
  * После сохранения победитель автоматически уезжает в следующий раунд. */
 (async function () {
-  const { el, toast, confirmBox, MATCH_STATUS } = window.UI;
+  const { el, toast, confirmBox, MATCH_STATUS, toLocalInput, fromLocalInput } = window.UI;
   const ok = await window.AdminShell.init('Матчи и результаты');
   if (!ok) return;
   const main = window.AdminShell.main();
@@ -9,15 +9,7 @@
 
   let tournament = null, teams = [], matches = [];
 
-  // Орск = UTC+5 без перехода на летнее время
-  function toLocalInput(iso) {
-    if (!iso) return '';
-    const d = new Date(new Date(iso).getTime() + 5 * 3600 * 1000);
-    const p = n => String(n).padStart(2, '0');
-    return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate()) +
-      'T' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes());
-  }
-  function fromLocalInput(v) { return v ? v + ':00+05:00' : null; }
+  // Время в полях — в поясе турнира (Asia/Yekaterinburg), см. UI.toLocalInput
 
   async function load() {
     const t = await sb.from('tournaments').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();

@@ -24,8 +24,13 @@
   if (tour) {
     $('#fact-start').textContent = fmtDate(tour.starts_at).replace(/ \d{4} г\.$/, '');
     $('#fact-teams').textContent = teamList.length + ' / ' + tour.max_teams;
-    startCountdown(tour.starts_at);
+    startCountdown(tour);
   }
+  // Название в hero берём из настроек: шапка уже показывает короткое
+  // название из базы, и h1 не должен с ней расходиться.
+  const shortTitle = window.Chrome.settings?.site?.short_title;
+  const heroTitle = $('#hero-title');
+  if (shortTitle && heroTitle) heroTitle.textContent = shortTitle;
   if (prize.data) {
     $('#fact-prize').textContent = fmtMoney(prize.data.value.total);
   }
@@ -69,13 +74,21 @@
     ]);
   }
 
-  function startCountdown(iso) {
+  function startCountdown(tour) {
+    const iso = tour.starts_at;
     if (!iso) return;
     const target = new Date(iso).getTime();
+    const ends = tour.ends_at ? new Date(tour.ends_at).getTime() : null;
     const host = $('#countdown');
+    const label = $('#cd-label');
     function tick() {
       const d = target - Date.now();
-      if (d <= 0) { host.innerHTML = ''; $('#cd-label').textContent = 'турнир идёт'; return; }
+      if (d <= 0) {
+        // Отсчёт закончился: показываем состояние турнира, а не «идёт» вечно.
+        host.innerHTML = '';
+        label.textContent = (ends && Date.now() > ends) ? 'турнир завершён' : 'турнир идёт';
+        return;
+      }
       const days = Math.floor(d / 86400000);
       const hrs = Math.floor(d % 86400000 / 3600000);
       const min = Math.floor(d % 3600000 / 60000);

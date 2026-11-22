@@ -12,7 +12,10 @@
     el('div', { class: 'big', text: 'Новость не найдена' }),
     el('p', {}, [el('a', { href: 'news.html', text: 'Ко всем новостям' })])])); return; }
 
-  document.title = data.title + ' — Кубок Орска по Dota 2';
+  // Название турнира — из настроек, чтобы новость не расходилась со шапкой
+  document.title = data.title + ' — ' +
+    ((window.Chrome.settings && window.Chrome.settings.site && window.Chrome.settings.site.title) ||
+      'Красный кубок по Dota 2');
 
   host.append(
     el('div', { class: 'eyebrow', text: data.tag }),
