@@ -6,7 +6,7 @@
 
   if (window.SITE_CONFIG.demoMode) {
     const note = $('#login-note');
-    if (note) note.textContent = 'Демо-режим: вход отключён, базы данных нет. Форма показана как макет.';
+    if (note) note.textContent = 'Макет: форма показана для примера, вход не выполняется.';
   }
 
   const form = $('#login-form');

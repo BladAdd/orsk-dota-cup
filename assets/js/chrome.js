@@ -227,7 +227,7 @@
       el('div', { class: 'legal' }, [
         el('span', { class: 'age-mark', text: window.SITE_CONFIG.ageRating }),
         window.SITE_CONFIG.demoMode
-          ? el('span', { class: 'badge gold', text: 'демо-режим: база отключена, результаты и сообщения примерные' })
+          ? el('span', { class: 'badge', text: 'макет: данные и сообщения показаны для примера' })
           : null,
         el('span', { text: '© ' + year + ' Оргкомитет «' + siteTitle() + '»' }),
         el('span', { text: 'Dota 2 — товарный знак Valve Corporation. Сайт не аффилирован с Valve и не спонсируется ею.' }),

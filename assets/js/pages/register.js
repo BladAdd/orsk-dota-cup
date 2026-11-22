@@ -11,7 +11,7 @@
   if (window.SITE_CONFIG.demoMode) {
     host.append(el('div', { class: 'panel', style: 'margin-bottom:18px' }, [
       el('p', { class: 'muted', style: 'font-size:14px;margin:0',
-        text: 'Демо-режим: база отключена. Анкета работает как макет — заявка остаётся в браузере и никому не отправляется.' })
+        text: 'Макет: анкета показана для примера, заявка никуда не отправляется.' })
     ]));
   }
 

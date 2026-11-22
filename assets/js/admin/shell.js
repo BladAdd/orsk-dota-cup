@@ -17,8 +17,8 @@
     if (window.SITE_CONFIG.demoMode) {
       document.body.append(el('div', { class: 'section container' }, [
         el('div', { class: 'empty-state' }, [
-          el('div', { class: 'big', text: 'Админка в демо-режиме отключена' }),
-          el('p', { text: 'Сайт работает без базы данных: правки сохранять некуда. Выключите demoMode в assets/js/config.js, чтобы вернуться к настоящей базе.' }),
+          el('div', { class: 'big', text: 'Админка в макете отключена' }),
+          el('p', { text: 'Страницы собраны на примере данных: правки сохранять некуда. Для работы с базой поставьте demoMode: false в assets/js/config.js.' }),
           el('a', { class: 'btn btn-ghost btn-sm', href: '../index.html', text: 'На сайт' })
         ])
       ]));
